@@ -17,7 +17,7 @@ flowchart LR
 
 ## Boundaries
 
-- `app/` contains only Vinext App Router entry files, metadata, and the global stylesheet aggregator.
+- `src/app/` contains only Vinext App Router entry files, metadata, and the global stylesheet aggregator.
 - `src/core/timeline/` contains browser- and framework-agnostic event contracts, analytics, parser adapters, and export transforms. Browser downloads are isolated in `export/download.ts`.
 - `src/features/` groups code by user capability. A feature may depend on Timeline core and shared modules, but must not reach into another feature's internal files.
 - `src/shared/` contains reusable presentation, formatting, and environment configuration without feature state.

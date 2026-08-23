@@ -1,0 +1,6 @@
+@import "maplibre-gl/dist/maplibre-gl.css";
+@import "tailwindcss";
+@import "../shared/styles/tokens.css";
+@import "../shared/styles/base.css";
+@import "../features/timeline-explorer/timeline-explorer.css";
+@import "../features/journey-video/journey-video.css";

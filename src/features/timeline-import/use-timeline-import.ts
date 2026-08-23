@@ -22,7 +22,7 @@ export function useTimelineImport() {
 
   const importFiles = useCallback((files: File[]) => {
     stopWorker();
-    const worker = new ImportWorker({ type: "module" });
+    const worker = new ImportWorker();
     workerRef.current = worker;
     setBusy(true);
     setError("");
