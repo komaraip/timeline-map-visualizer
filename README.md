@@ -1,6 +1,6 @@
 # Timeline Map Visualizer
 
-![Timeline Map Visualizer](public/og.png)
+![Timeline Map Visualizer](public/img/og.png)
 
 A privacy-first, open-source web app for exploring Google Maps Timeline exports. Import your data, filter visits and journeys, inspect useful statistics, and export a portable copy—without sending the Timeline file to a server.
 
