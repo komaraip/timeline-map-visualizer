@@ -16,6 +16,8 @@ Use Node.js 22.13 or newer and install dependencies with `npm install`. The app 
 
 The project uses TypeScript, React, MapLibre GL JS, Vitest, Testing Library, and Playwright. Keep user-facing text in English for v1, preserve keyboard access, and test mobile behavior for UI changes.
 
+Follow the boundaries in [Project structure](docs/architecture/project-structure.md). Parser changes should also follow [Parser architecture](docs/architecture/parser.md). Unit and component tests live next to the source they cover; cross-feature fixtures and Playwright tests remain under `tests/`.
+
 ## Privacy review
 
 Changes that add a network destination, browser persistence, telemetry, geocoding, or file upload must be discussed before implementation. Pull requests must explain what data crosses the browser boundary and why.

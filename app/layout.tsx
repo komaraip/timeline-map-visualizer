@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/config/environment";
 import "./globals.css";
 
-const siteUrl = new URL(`${(import.meta.env.VITE_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/`);
+const siteUrl = new URL(`${SITE_URL.replace(/\/$/, "")}/`);
 const socialImage = new URL("og.png", siteUrl).toString();
 
 export const dynamic = "force-static";

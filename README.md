@@ -69,7 +69,9 @@ Playwright requires its browser packages (`npx playwright install --with-deps`) 
 | Legacy Semantic Location History | `timelineObjects` | place visits and activity segments |
 | Legacy raw Location History | `locations` | individual samples rendered as points/heatmap |
 
-Raw samples are never connected into invented routes. Activity lines only use geometry present in the source export. Read [Parser architecture](docs/PARSER_ARCHITECTURE.md) before adding a format adapter.
+Raw samples are never connected into invented routes. Activity lines only use geometry present in the source export. Read [Parser architecture](docs/architecture/parser.md) before adding a format adapter.
+
+The repository uses a core + feature-first layout. See [Project structure](docs/architecture/project-structure.md) for dependency rules and file placement guidance.
 
 ## Journey Video Studio
 

@@ -1,14 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
 
-test("imports a Timeline file, filters events, and clears memory", async ({ page }) => {
+test("imports a Timeline file, filters events, and clears memory", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /your journeys/i })).toBeVisible();
   await page.locator('input[type="file"]').setInputFiles(resolve("tests/fixtures/device-timeline.json"));
-  await expect(page.getByText(/of 3 events/i)).toBeVisible();
+  await expect(page.locator(".dataset-status")).toContainText(/of 3 events/i);
   await expect(page.getByText("MAPPED DISTANCE")).toBeVisible();
+  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Filters" }).click();
   await page.getByText("Movements").click();
-  await expect(page.getByText(/of 3 events/i)).toBeVisible();
+  await expect(page.locator(".dataset-status")).toContainText(/of 3 events/i);
+  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Close panel" }).click();
   await page.getByRole("button", { name: "Clear data" }).click();
   await expect(page.getByRole("button", { name: "Choose files" })).toBeVisible();
 });
@@ -18,12 +20,14 @@ test("never sends Timeline contents in a network request", async ({ page }) => {
   const unexpectedHosts: string[] = [];
   page.on("request", (request) => {
     if (request.postData()) requestBodies.push(request.postData() || "");
-    const host = new URL(request.url()).hostname;
+    const url = new URL(request.url());
+    if (!url.protocol.startsWith("http")) return;
+    const host = url.hostname;
     if (!["127.0.0.1", "localhost", "tiles.openfreemap.org"].includes(host)) unexpectedHosts.push(host);
   });
   await page.goto("/");
   await page.locator('input[type="file"]').setInputFiles(resolve("tests/fixtures/device-timeline.json"));
-  await expect(page.getByText(/of 3 events/i)).toBeVisible();
+  await expect(page.locator(".dataset-status")).toContainText(/of 3 events/i);
   expect(requestBodies.join(" ")).not.toContain("semanticSegments");
   expect(requestBodies.join(" ")).not.toContain("synthetic-place");
   expect([...new Set(unexpectedHosts)]).toEqual([]);

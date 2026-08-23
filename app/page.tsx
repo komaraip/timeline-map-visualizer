@@ -1,4 +1,4 @@
-import { TimelineApp } from "./components/TimelineApp";
+import { TimelineApp } from "@/features/timeline-explorer";
 
 export const dynamic = "force-static";
 
