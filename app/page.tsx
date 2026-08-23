@@ -1,0 +1,7 @@
+import { TimelineApp } from "./components/TimelineApp";
+
+export const dynamic = "force-static";
+
+export default function Home() {
+  return <TimelineApp />;
+}
