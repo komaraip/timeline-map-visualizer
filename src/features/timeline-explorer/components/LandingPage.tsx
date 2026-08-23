@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef, useState } from "react";
 import { Brand } from "@/shared/components/Brand";
 import { REPOSITORY_URL } from "@/shared/config/environment";
@@ -11,10 +9,9 @@ interface LandingPageProps {
   progress: string;
   error: string;
   onCancel: () => void;
-  interactive: boolean;
 }
 
-export function LandingPage({ onFiles, onDemo, busy, progress, error, onCancel, interactive }: LandingPageProps) {
+export function LandingPage({ onFiles, onDemo, busy, progress, error, onCancel }: LandingPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const acceptFiles = (list: FileList | null) => {
@@ -42,12 +39,12 @@ export function LandingPage({ onFiles, onDemo, busy, progress, error, onCancel, 
         <div className={`import-card ${dragging ? "is-dragging" : ""}`}>
           <div className="import-card-top"><span className="step-label">01 — IMPORT</span><span className="format-label">JSON · ZIP</span></div>
           <div className="drop-zone" onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); acceptFiles(event.dataTransfer.files); }}>
-            {interactive && <input ref={inputRef} hidden type="file" multiple accept=".json,.zip,application/json,application/zip" onChange={(event) => acceptFiles(event.target.files)} />}
+            <input ref={inputRef} hidden type="file" multiple accept=".json,.zip,application/json,application/zip" onChange={(event) => acceptFiles(event.target.files)} />
             <span className="upload-glyph" aria-hidden="true">↑</span>
             <h2>{busy ? "Reading your journey…" : "Drop your Timeline export"}</h2>
             <p>{busy ? progress : "or choose files from your device"}</p>
-            {busy ? <button className="secondary-button" type="button" onClick={onCancel}>Cancel import</button> : <button type="button" disabled={!interactive} onClick={() => inputRef.current?.click()}>Choose files</button>}
-            {!busy && <button className="text-button" type="button" disabled={!interactive} onClick={onDemo}>Explore synthetic demo</button>}
+            {busy ? <button className="secondary-button" type="button" onClick={onCancel}>Cancel import</button> : <button type="button" onClick={() => inputRef.current?.click()}>Choose files</button>}
+            {!busy && <button className="text-button" type="button" onClick={onDemo}>Explore synthetic demo</button>}
           </div>
           {error && <p className="inline-error" role="alert">{error}</p>}
           <p className="import-note">Supports Timeline.json, Semantic Location History, Records.json, multiple monthly files, and Takeout ZIP archives.</p>

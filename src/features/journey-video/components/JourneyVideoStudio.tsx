@@ -1,4 +1,3 @@
-"use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TimelineEvent } from "@/core/timeline";
 import { useJourneyPlayback } from "../hooks/use-journey-playback";

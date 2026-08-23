@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chooseRecordingMimeType } from "../media/mime-types";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";

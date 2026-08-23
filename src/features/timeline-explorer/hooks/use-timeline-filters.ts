@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useMemo, useState } from "react";
 import { eventTime, filterEvents, getStatistics, sampleRawEvents, type TimelineEvent } from "@/core/timeline";
 

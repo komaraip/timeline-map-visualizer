@@ -10,11 +10,6 @@
 !.yarn/releases
 !.yarn/versions
 
-# next.js
-/.next/
-/.vinext/
-/out/
-
 # misc
 .DS_Store
 *.pem
@@ -30,11 +25,5 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
-.vercel
-
 /dist/
-/.wrangler/
-/outputs/
-/work/
 /.tooling/

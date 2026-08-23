@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo, useState } from "react";
 import { eventTime, type ImportReport, type TimelineEvent } from "@/core/timeline";
 import { useTimelineImport } from "@/features/timeline-import";

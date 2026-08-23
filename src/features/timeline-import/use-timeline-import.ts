@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ImportReport, TimelineEvent } from "@/core/timeline";
 import ImportWorker from "./import.worker?worker";

@@ -37,7 +37,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. You can select **Explore synthetic demo** without using personal data.
+Open `http://localhost:5173`. You can select **Explore synthetic demo** without using personal data.
 
 Optional environment values:
 
@@ -48,6 +48,13 @@ cp .env.example .env.local
 - `VITE_MAP_STYLE_URL` changes the MapLibre style provider.
 - `VITE_REPOSITORY_URL` changes the repository link shown in the UI.
 - `VITE_SITE_URL` sets the absolute URL used in social metadata.
+
+To preview a production build locally:
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Validation
 
@@ -69,7 +76,8 @@ Raw samples are never connected into invented routes. Activity lines only use ge
 
 ## Architecture
 
-- `src/app/` contains the Vinext route shell and global stylesheet entry.
+- `index.html` contains the document shell and social metadata.
+- `src/main.tsx` mounts the React application, while `src/styles/globals.css` aggregates global and feature styles.
 - `src/core/timeline/` contains normalized event contracts, analytics, parser adapters, and export transforms.
 - `src/features/` contains Timeline import, explorer, and Journey Video capabilities.
 - `src/shared/` contains reusable UI, formatters, and environment configuration.
@@ -113,7 +121,7 @@ Report vulnerabilities through GitHub private vulnerability reporting. Never att
 
 ## Deployment
 
-The included workflows run typecheck, lint, and build validation for every pull request and publish the static export to GitHub Pages after a push to `main`. Enable **Settings → Pages → GitHub Actions** in the GitHub repository. Configure `VITE_REPOSITORY_URL` in the workflow or repository variables once the final repository URL is known.
+The included workflows run typecheck, lint, and build validation for every pull request and publish the Vite output from `dist/` to GitHub Pages after a push to `main`. Enable **Settings → Pages → GitHub Actions** in the GitHub repository. Configure `VITE_REPOSITORY_URL` in the workflow or repository variables once the final repository URL is known.
 
 ## Contributing
 
