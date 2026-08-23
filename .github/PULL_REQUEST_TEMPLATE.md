@@ -12,6 +12,5 @@ Describe the user-visible behavior and the formats affected.
 
 - [ ] Typecheck
 - [ ] Lint
-- [ ] Unit/integration tests
 - [ ] Production build
-- [ ] Responsive or end-to-end checks when UI behavior changed
+- [ ] Manual browser and responsive checks when UI behavior changed

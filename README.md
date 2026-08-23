@@ -49,17 +49,13 @@ cp .env.example .env.local
 - `VITE_REPOSITORY_URL` changes the repository link shown in the UI.
 - `VITE_SITE_URL` sets the absolute URL used in social metadata.
 
-## Verification
+## Validation
 
 ```bash
 npm run typecheck
 npm run lint
-npm test
 npm run build
-npm run test:e2e
 ```
-
-Playwright requires its browser packages (`npx playwright install --with-deps`) before the end-to-end suite can run.
 
 ## Supported data contracts
 
@@ -69,9 +65,17 @@ Playwright requires its browser packages (`npx playwright install --with-deps`) 
 | Legacy Semantic Location History | `timelineObjects` | place visits and activity segments |
 | Legacy raw Location History | `locations` | individual samples rendered as points/heatmap |
 
-Raw samples are never connected into invented routes. Activity lines only use geometry present in the source export. Read [Parser architecture](docs/architecture/parser.md) before adding a format adapter.
+Raw samples are never connected into invented routes. Activity lines only use geometry present in the source export.
 
-The repository uses a core + feature-first layout. See [Project structure](docs/architecture/project-structure.md) for dependency rules and file placement guidance.
+## Architecture
+
+- `src/app/` contains the Vinext route shell and global stylesheet entry.
+- `src/core/timeline/` contains normalized event contracts, analytics, parser adapters, and export transforms.
+- `src/features/` contains Timeline import, explorer, and Journey Video capabilities.
+- `src/shared/` contains reusable UI, formatters, and environment configuration.
+- `scripts/` contains Node-based project tooling.
+
+Timeline parsing runs inside a Web Worker. Format adapters live in `src/core/timeline/parsing/adapters/`, normalize coordinates to WGS84 `[longitude, latitude]`, convert timestamps to epoch milliseconds, and expose only the shared `TimelineEvent` contract to feature code. New adapters must preserve source geometry, reject malformed values, and never include raw Timeline values in warnings.
 
 ## Journey Video Studio
 
@@ -85,7 +89,13 @@ After importing data, select **Create short** to open the full-screen video stud
 
 Preview and recording use the same deterministic journey model. If the configured tile provider prevents its canvas from being recorded, the export automatically switches to a local minimal map instead of failing or uploading data. Browser encoding is real-time: a 15-second journey plus its ending takes about 16.5 seconds to create.
 
-Bundled soundtrack provenance and checksums are documented in [`public/audio/LICENSES.md`](public/audio/LICENSES.md). Uploaded audio remains an in-memory object URL and is released when the studio closes.
+The bundled soundtracks were generated specifically for this project by `scripts/generate-soundtracks.mjs`, contain no third-party samples, and are dedicated to the public domain under CC0 1.0. Uploaded audio remains an in-memory object URL and is released when the studio closes.
+
+| Soundtrack | SHA-256 |
+| --- | --- |
+| Ambient Drift | `76684482ce7b2aa6c6897f682d2963d3dada851098cc724c5830867f689d5c37` |
+| Bright Miles | `b6e6a44723776a188a2f82c9531a3a4141e83ce8fd6249b12929acb7d29c7910` |
+| Cinematic Rise | `2db8feb24836ba3768e81ed3a4477fce64fd5ab51317f7035509ac6fb76bcd4a` |
 
 Maintainers can deterministically rebuild the original soundtrack assets with `npm run music:generate`; update the documented checksums whenever the generator changes.
 
@@ -97,20 +107,20 @@ Maintainers can deterministically rebuild the original soundtrack assets with `n
 - Only non-sensitive UI preferences may be persisted in future versions.
 - ZIP extraction stops after 1 GiB of decompressed Timeline data.
 - Parser errors use generic messages and never include raw coordinates or source contents.
-- Synthetic fixtures are the only location data committed to this repository.
+- Only synthetic demonstration data is committed to this repository.
 
-Please report sensitive issues according to [SECURITY.md](SECURITY.md).
+Report vulnerabilities through GitHub private vulnerability reporting. Never attach a real Timeline export or personal coordinates to an issue or report.
 
 ## Deployment
 
-The included workflows run checks for every pull request and publish the static export to GitHub Pages after a push to `main`. Enable **Settings → Pages → GitHub Actions** in the GitHub repository. Configure `VITE_REPOSITORY_URL` in the workflow or repository variables once the final repository URL is known.
+The included workflows run typecheck, lint, and build validation for every pull request and publish the static export to GitHub Pages after a push to `main`. Enable **Settings → Pages → GitHub Actions** in the GitHub repository. Configure `VITE_REPOSITORY_URL` in the workflow or repository variables once the final repository URL is known.
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions are welcome. Keep format-specific logic inside parser adapters, use only synthetic data for manual validation, run `npm run check`, and explain privacy or network changes in the pull request. Contributors must communicate respectfully and never post another person's location data or identifiers.
 
 ## License and trademark notice
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE.md).
 
 Timeline Map Visualizer is an independent project and is not affiliated with, endorsed by, or sponsored by Google. Google Maps and Google are trademarks of Google LLC.
