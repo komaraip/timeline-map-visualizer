@@ -1,7 +1,7 @@
 import type { Position } from "@/core/timeline";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";
-import type { JourneyVideoSettings } from "../model/video-settings";
-import { drawJourneyMarker, drawMinimalMap, type CanvasPoint, type MinimalProjector } from "./minimal-map-renderer";
+import type { JourneyCameraState, JourneyVideoSettings } from "../model/video-settings";
+import { createCameraProjector, drawJourneyMarker, drawMinimalMap, type CanvasPoint, type MinimalProjector } from "./minimal-map-renderer";
 
 const drawCover = (context: CanvasRenderingContext2D, source: HTMLCanvasElement, width: number, height: number) => {
   const scale = Math.max(width / source.width, height / source.height);
@@ -13,7 +13,7 @@ const drawCover = (context: CanvasRenderingContext2D, source: HTMLCanvasElement,
 interface CompositeFrameOptions {
   canvas: HTMLCanvasElement;
   frame: JourneyFrame;
-  overview: boolean;
+  camera: JourneyCameraState;
   useBasemap: boolean;
   basemapCanvas?: HTMLCanvasElement;
   projectBasemap?: (position: Position, width: number, height: number) => CanvasPoint;
@@ -24,13 +24,15 @@ interface CompositeFrameOptions {
 }
 
 export const drawCompositeFrame = (options: CompositeFrameOptions) => {
-  const { canvas, frame, overview, useBasemap, basemapCanvas, projectBasemap, projectMinimal, settings, period, track } = options;
+  const { canvas, frame, camera, useBasemap, basemapCanvas, projectBasemap, projectMinimal, settings, period, track } = options;
   const context = canvas.getContext("2d");
   if (!context) return;
   const { width, height } = canvas;
+  const overview = camera.phase === "overview";
+  const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera);
   context.clearRect(0, 0, width, height);
   if (useBasemap && basemapCanvas?.width && basemapCanvas.height) drawCover(context, basemapCanvas, width, height);
-  else drawMinimalMap(context, width, height, overview ? { ...track.frameAt(1), completedPaths: track.movements.map((step) => step.path), activePath: [] } : frame, projectMinimal);
+  else drawMinimalMap(context, width, height, overview ? { ...track.frameAt(1), completedPaths: track.movements.map((step) => step.path), activePath: [] } : frame, cameraProjector);
 
   const topShade = context.createLinearGradient(0, 0, 0, height * 0.3);
   topShade.addColorStop(0, "rgba(23,44,36,.78)"); topShade.addColorStop(1, "rgba(23,44,36,0)");
@@ -50,7 +52,7 @@ export const drawCompositeFrame = (options: CompositeFrameOptions) => {
   if (frame.position) {
     const marker = useBasemap && projectBasemap
       ? projectBasemap(frame.position, width, height)
-      : projectMinimal(frame.position, width, height);
+      : cameraProjector(frame.position, width, height);
     drawJourneyMarker(context, marker, width);
   }
   context.fillStyle = "#f3f0e7";

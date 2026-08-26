@@ -5,9 +5,9 @@ import { useJourneyRecorder } from "../hooks/use-journey-recorder";
 import { useStudioMap } from "../hooks/use-studio-map";
 import { soundtrackSource } from "../media/soundtrack-catalog";
 import { buildJourneyTrack } from "../model/journey-track";
-import { DEFAULT_VIDEO_SETTINGS, videoDimensions } from "../model/video-settings";
+import { DEFAULT_VIDEO_SETTINGS, videoDimensions, type JourneyCameraState } from "../model/video-settings";
 import { drawCompositeFrame } from "../rendering/canvas-renderer";
-import { createMinimalProjector, drawJourneyMarker, drawMinimalMap } from "../rendering/minimal-map-renderer";
+import { createCameraProjector, createMinimalProjector, drawJourneyMarker, drawMinimalMap } from "../rendering/minimal-map-renderer";
 import { JourneyControls } from "./JourneyControls";
 import { JourneyPreview } from "./JourneyPreview";
 import { SoundtrackPicker } from "./SoundtrackPicker";
@@ -47,6 +47,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
 
   const {
     frame,
+    camera,
     playing,
     progress,
     togglePlayback,
@@ -69,18 +70,19 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     const dimensions = videoDimensions(settings.aspectRatio, "standard");
     canvas.width = Math.round(dimensions.width / 2);
     canvas.height = Math.round(dimensions.height / 2);
-    const previewFrame = progress >= 1
+    const previewFrame = camera.phase === "overview"
       ? { ...track.frameAt(1), completedPaths: track.movements.map((step) => step.path), activePath: [] }
       : frame;
-    drawMinimalMap(context, canvas.width, canvas.height, previewFrame, projectMinimal);
-    if (previewFrame.position) drawJourneyMarker(context, projectMinimal(previewFrame.position, canvas.width, canvas.height), canvas.width);
-  }, [frame, mapFallback, progress, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
+    const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera);
+    drawMinimalMap(context, canvas.width, canvas.height, previewFrame, cameraProjector);
+    if (previewFrame.position) drawJourneyMarker(context, cameraProjector(previewFrame.position, canvas.width, canvas.height), canvas.width);
+  }, [camera, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
 
-  const renderFrame = useCallback((canvas: HTMLCanvasElement, frame: ReturnType<typeof track.frameAt>, overview: boolean, useBasemap: boolean) => {
+  const renderFrame = useCallback((canvas: HTMLCanvasElement, frame: ReturnType<typeof track.frameAt>, cameraState: JourneyCameraState, useBasemap: boolean) => {
     drawCompositeFrame({
       canvas,
       frame,
-      overview,
+      camera: cameraState,
       useBasemap,
       basemapCanvas: mapRef.current?.getCanvas(),
       projectBasemap,

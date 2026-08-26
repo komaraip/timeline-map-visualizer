@@ -1,8 +1,14 @@
 import type { Position } from "@/core/timeline";
 import type { JourneyBounds, JourneyFrame } from "../model/journey-track";
+import type { JourneyCameraState } from "../model/video-settings";
 
 export type CanvasPoint = { x: number; y: number };
 export type MinimalProjector = (position: Position, width: number, height: number) => CanvasPoint;
+
+const FOLLOW_SCALE = 2.65;
+const easeInOutCubic = (progress: number) => progress < 0.5
+  ? 4 * progress * progress * progress
+  : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
 export const createMinimalProjector = (bounds?: JourneyBounds): MinimalProjector =>
   (position, width, height) => {
@@ -17,6 +23,33 @@ export const createMinimalProjector = (bounds?: JourneyBounds): MinimalProjector
       y: height * (0.9 - 0.8 * (position[1] - bounds.south) / latitudeSpan),
     };
   };
+
+export const createCameraProjector = (
+  project: MinimalProjector,
+  focus: Position | undefined,
+  camera: JourneyCameraState,
+): MinimalProjector => (position, width, height) => {
+  const point = project(position, width, height);
+  if (!focus || camera.phase === "idle") return point;
+  const eased = easeInOutCubic(camera.progress);
+  const focusAmount = camera.phase === "intro"
+    ? eased
+    : camera.phase === "overview"
+      ? 1 - eased
+      : 1;
+  const scale = camera.phase === "intro"
+    ? 1 + (FOLLOW_SCALE - 1) * eased
+    : camera.phase === "overview"
+      ? FOLLOW_SCALE + (1 - FOLLOW_SCALE) * eased
+      : FOLLOW_SCALE;
+  const focusPoint = project(focus, width, height);
+  const cameraX = width / 2 + (focusPoint.x - width / 2) * focusAmount;
+  const cameraY = height / 2 + (focusPoint.y - height / 2) * focusAmount;
+  return {
+    x: width / 2 + (point.x - cameraX) * scale,
+    y: height / 2 + (point.y - cameraY) * scale,
+  };
+};
 
 export const drawJourneyMarker = (
   context: CanvasRenderingContext2D,

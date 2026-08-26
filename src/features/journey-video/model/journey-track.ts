@@ -1,4 +1,4 @@
-import { distanceKm, eventTime, pathDistanceKm, type MovementEvent, type Position, type TimelineEvent, type VisitEvent } from "@/core/timeline";
+import { distanceKm, eventTime, type MovementEvent, type Position, type TimelineEvent, type VisitEvent } from "@/core/timeline";
 
 export interface JourneyMovementStep {
   kind: "movement";
@@ -7,6 +7,7 @@ export interface JourneyMovementStep {
   endMs: number;
   activityType: string;
   path: Position[];
+  cumulativeKm: number[];
   distanceKm: number;
   weight: number;
 }
@@ -54,6 +55,7 @@ export interface JourneyTrack {
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const normalizeLongitude = (longitude: number) => ((longitude + 540) % 360) - 180;
+const smoothMovementProgress = (progress: number) => progress * progress * (3 - 2 * progress);
 
 const interpolatePosition = (a: Position, b: Position, progress: number): Position => {
   let longitudeDelta = b[0] - a[0];
@@ -62,29 +64,28 @@ const interpolatePosition = (a: Position, b: Position, progress: number): Positi
   return [normalizeLongitude(a[0] + longitudeDelta * progress), a[1] + (b[1] - a[1]) * progress];
 };
 
-const slicePathAt = (path: Position[], progress: number) => {
+const slicePathAt = (path: Position[], cumulativeKm: number[], totalKm: number, progress: number) => {
   if (!path.length) return { path: [] as Position[], position: undefined };
   if (path.length === 1 || progress <= 0) return { path: [path[0]], position: path[0] };
   if (progress >= 1) return { path: [...path], position: path.at(-1) };
 
-  const distances = path.slice(1).map((point, index) => distanceKm(path[index], point));
-  const total = distances.reduce((sum, value) => sum + value, 0);
-  if (!total) return { path: [path[0]], position: path[0] };
-  const target = total * progress;
-  let traveled = 0;
-  const visible: Position[] = [path[0]];
-  for (let index = 0; index < distances.length; index += 1) {
-    const segmentDistance = distances[index];
-    if (traveled + segmentDistance >= target) {
-      const localProgress = segmentDistance ? (target - traveled) / segmentDistance : 0;
-      const position = interpolatePosition(path[index], path[index + 1], localProgress);
-      visible.push(position);
-      return { path: visible, position };
-    }
-    traveled += segmentDistance;
-    visible.push(path[index + 1]);
+  if (!totalKm) return { path: [path[0]], position: path[0] };
+  const target = totalKm * smoothMovementProgress(progress);
+  let low = 1;
+  let high = cumulativeKm.length - 1;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (cumulativeKm[middle] < target) low = middle + 1;
+    else high = middle;
   }
-  return { path: visible, position: path.at(-1) };
+  const segmentIndex = Math.max(0, low - 1);
+  const segmentStart = cumulativeKm[segmentIndex];
+  const segmentDistance = cumulativeKm[segmentIndex + 1] - segmentStart;
+  const localProgress = segmentDistance ? (target - segmentStart) / segmentDistance : 0;
+  const position = interpolatePosition(path[segmentIndex], path[segmentIndex + 1], localProgress);
+  const visible = path.slice(0, segmentIndex + 1);
+  visible.push(position);
+  return { path: visible, position };
 };
 
 const computeBounds = (positions: Position[]): JourneyBounds | undefined => {
@@ -110,7 +111,11 @@ const computeBounds = (positions: Position[]): JourneyBounds | undefined => {
 
 const movementStep = (event: MovementEvent): JourneyMovementStep | undefined => {
   if (event.path.length < 2) return undefined;
-  const distance = pathDistanceKm(event.path);
+  const cumulativeKm = [0];
+  for (let index = 1; index < event.path.length; index += 1) {
+    cumulativeKm.push(cumulativeKm[index - 1] + distanceKm(event.path[index - 1], event.path[index]));
+  }
+  const distance = cumulativeKm.at(-1) ?? 0;
   return {
     kind: "movement",
     id: event.id,
@@ -118,6 +123,7 @@ const movementStep = (event: MovementEvent): JourneyMovementStep | undefined => 
     endMs: Math.max(event.startMs, event.endMs ?? event.startMs),
     activityType: event.activityType,
     path: event.path,
+    cumulativeKm,
     distanceKm: distance,
     weight: Math.max(0.5, Math.sqrt(Math.max(distance, 0.01))),
   };
@@ -164,7 +170,7 @@ export const buildJourneyTrack = (events: TimelineEvent[]): JourneyTrack => {
       if (target <= next || step === steps.at(-1)) {
         const localProgress = clamp((target - cursor) / step.weight);
         if (step.kind === "movement") {
-          const visible = slicePathAt(step.path, localProgress);
+          const visible = slicePathAt(step.path, step.cumulativeKm, step.distanceKm, localProgress);
           return {
             progress,
             position: visible.position,
@@ -203,4 +209,3 @@ export const buildJourneyTrack = (events: TimelineEvent[]): JourneyTrack => {
     frameAt,
   };
 };
-

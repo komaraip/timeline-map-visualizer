@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chooseRecordingMimeType } from "../media/mime-types";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";
-import { ENDING_SECONDS, videoDimensions, type ExportStatus, type JourneyVideoSettings } from "../model/video-settings";
+import { journeyPresentationAt, journeyVideoSeconds, videoDimensions, type ExportStatus, type JourneyCameraState, type JourneyVideoSettings } from "../model/video-settings";
 
 interface JourneyRecorderOptions {
   track: JourneyTrack;
@@ -11,8 +11,8 @@ interface JourneyRecorderOptions {
   stopPlayback: () => void;
   basemapIsRecordable: () => boolean;
   onFallback: () => void;
-  onFrame: (frame: JourneyFrame, overview: boolean) => void;
-  drawFrame: (canvas: HTMLCanvasElement, frame: JourneyFrame, overview: boolean, useBasemap: boolean) => void;
+  onFrame: (frame: JourneyFrame, camera: JourneyCameraState) => void;
+  drawFrame: (canvas: HTMLCanvasElement, frame: JourneyFrame, camera: JourneyCameraState, useBasemap: boolean) => void;
 }
 
 export function useJourneyRecorder(options: JourneyRecorderOptions) {
@@ -115,19 +115,24 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
 
     recorder.start(1000);
     setStatus("recording"); setMessage(`Recording ${format.extension.toUpperCase()} locally…`);
-    const totalSeconds = settings.durationSec + ENDING_SECONDS;
+    const totalSeconds = journeyVideoSeconds(settings.durationSec);
     const recordingStarted = performance.now();
+    let lastUiUpdate = 0;
     const render = (timestamp: number) => {
       if (recorder.state !== "recording") return;
       const elapsed = (timestamp - recordingStarted) / 1000;
-      const overview = elapsed > settings.durationSec;
-      const frame = track.frameAt(Math.min(1, elapsed / settings.durationSec));
-      onFrame(frame, overview);
-      const fade = Math.min(1, elapsed / 0.6, Math.max(0, (totalSeconds - elapsed) / 0.7));
+      const boundedElapsed = Math.min(totalSeconds, elapsed);
+      const presentation = journeyPresentationAt(boundedElapsed, settings.durationSec);
+      const frame = track.frameAt(presentation.routeProgress);
+      onFrame(frame, presentation.camera);
+      const fade = Math.min(1, boundedElapsed / 0.6, Math.max(0, (totalSeconds - boundedElapsed) / 0.7));
       if (gainNode) gainNode.gain.value = settings.volume * fade;
-      drawFrame(canvas, frame, overview, useBasemap);
-      setProgress(Math.min(1, elapsed / totalSeconds));
-      setMessage(`Recording ${format.extension.toUpperCase()} locally · ${Math.max(0, Math.ceil(totalSeconds - elapsed))}s remaining`);
+      drawFrame(canvas, frame, presentation.camera, useBasemap);
+      if (timestamp - lastUiUpdate >= 100 || boundedElapsed >= totalSeconds) {
+        lastUiUpdate = timestamp;
+        setProgress(Math.min(1, boundedElapsed / totalSeconds));
+        setMessage(`Recording ${format.extension.toUpperCase()} locally · ${Math.max(0, Math.ceil(totalSeconds - boundedElapsed))}s remaining`);
+      }
       if (elapsed >= totalSeconds) { setStatus("finalizing"); setMessage("Finalizing the local video…"); recorder.stop(); return; }
       animationRef.current = requestAnimationFrame(render);
     };

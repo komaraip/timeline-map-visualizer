@@ -95,7 +95,7 @@ After importing data, select **Create short** to open the full-screen video stud
 - Soundtracks: three bundled CC0 instrumental loops, no music, or a local audio file selected by the user.
 - Output: MP4 when the browser exposes a compatible H.264/AAC recorder, otherwise WebM VP9/Opus or VP8/Opus.
 
-Preview and recording use the same deterministic journey model. If the configured tile provider prevents its canvas from being recorded, the export automatically switches to a local minimal map instead of failing or uploading data. Browser encoding is real-time: a 15-second journey plus its ending takes about 16.5 seconds to create.
+Preview and recording use the same deterministic journey model, including a smooth 1.4-second zoom-in and the 1.5-second ending overview. If the configured tile provider prevents its canvas from being recorded, the export automatically switches to a local minimal map instead of failing or uploading data. Browser encoding is real-time: a 15-second journey takes about 17.9 seconds to create with both camera transitions.
 
 The bundled soundtracks were generated specifically for this project by `scripts/generate-soundtracks.mjs`, contain no third-party samples, and are dedicated to the public domain under CC0 1.0. Uploaded audio remains an in-memory object URL and is released when the studio closes.
 
