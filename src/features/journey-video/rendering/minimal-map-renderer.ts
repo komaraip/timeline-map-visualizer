@@ -73,16 +73,10 @@ export const drawMinimalMap = (
   project: MinimalProjector,
 ) => {
   const background = context.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, "#b8dacb");
-  background.addColorStop(1, "#e9e3cd");
+  background.addColorStop(0, "#c7dacf");
+  background.addColorStop(1, "#e2e4d5");
   context.fillStyle = background;
   context.fillRect(0, 0, width, height);
-  context.strokeStyle = "rgba(23,44,36,.09)";
-  context.lineWidth = Math.max(1, width / 720);
-  const grid = Math.max(48, width / 9);
-  for (let x = -height; x < width + height; x += grid) {
-    context.beginPath(); context.moveTo(x, 0); context.lineTo(x + height, height); context.stroke();
-  }
   const drawPaths = (paths: Position[][], color: string, alpha: number, lineWidth: number) => {
     context.save();
     context.strokeStyle = color;

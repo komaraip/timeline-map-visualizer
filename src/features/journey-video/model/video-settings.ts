@@ -48,6 +48,7 @@ export interface JourneyVideoSettings {
   durationSec: 10 | 15 | 30 | 60;
   title: string;
   subtitle: string;
+  showJourneyDetails: boolean;
   soundtrackId: SoundtrackId;
   volume: number;
   fps: VideoFrameRate;
@@ -60,6 +61,7 @@ export const DEFAULT_VIDEO_SETTINGS: JourneyVideoSettings = {
   durationSec: 15,
   title: "My journey",
   subtitle: "",
+  showJourneyDetails: true,
   soundtrackId: "ambient-drift",
   volume: 0.7,
   fps: 30,

@@ -8,7 +8,15 @@ export function JourneyControls({ settings, setSettings, period }: {
 }) {
   return (
     <>
-      <section><div className="studio-section-title"><span>01</span><strong>Story</strong></div><label>Title<input value={settings.title} maxLength={64} onChange={(event) => setSettings((current) => ({ ...current, title: event.target.value }))} /></label><label>Subtitle<input value={settings.subtitle} maxLength={80} placeholder={period} onChange={(event) => setSettings((current) => ({ ...current, subtitle: event.target.value }))} /></label></section>
+      <section>
+        <div className="studio-section-title"><span>01</span><strong>Story</strong></div>
+        <label>Title<input value={settings.title} maxLength={64} onChange={(event) => setSettings((current) => ({ ...current, title: event.target.value }))} /></label>
+        <label>Subtitle<input value={settings.subtitle} maxLength={80} placeholder={period} onChange={(event) => setSettings((current) => ({ ...current, subtitle: event.target.value }))} /></label>
+        <div className="studio-choice-grid studio-choice-grid-two studio-details-toggle" aria-label="Journey details visibility">
+          <button type="button" className={settings.showJourneyDetails ? "active" : ""} onClick={() => setSettings((current) => ({ ...current, showJourneyDetails: true }))}>Show details</button>
+          <button type="button" className={!settings.showJourneyDetails ? "active" : ""} onClick={() => setSettings((current) => ({ ...current, showJourneyDetails: false }))}>Hide details</button>
+        </div>
+      </section>
       <section>
         <div className="studio-section-title"><span>02</span><strong>Canvas</strong></div>
         <div className="studio-choice-grid" aria-label="Video aspect ratio">

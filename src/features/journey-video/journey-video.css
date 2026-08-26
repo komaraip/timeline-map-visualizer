@@ -70,10 +70,9 @@
   box-shadow: 0 4px 16px rgba(16,28,23,.42), 0 0 0 5px rgba(216,255,95,.16);
   will-change: transform;
 }
-.studio-minimal-preview { z-index: 1; display: grid; place-content: center; overflow: hidden; background: linear-gradient(145deg, #b8dacb, #e9e3cd); }
-.studio-minimal-preview > span { position: relative; z-index: 2; padding: 8px 11px; background: rgba(23,44,36,.82); color: var(--lime); font-size: 8px; font-weight: 850; letter-spacing: .13em; }
+.studio-minimal-preview { z-index: 1; overflow: hidden; background: linear-gradient(145deg, #c7dacf, #e2e4d5); }
+.studio-minimal-preview > span { position: absolute; z-index: 2; top: 12px; right: 12px; padding: 7px 9px; background: rgba(23,44,36,.82); color: var(--lime); font-size: 8px; font-weight: 850; letter-spacing: .13em; }
 .studio-minimal-preview canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; }
-.studio-minimal-grid { position: absolute; inset: -25%; opacity: .25; background-image: linear-gradient(32deg, transparent 48%, rgba(23,44,36,.35) 49%, transparent 51%), linear-gradient(105deg, transparent 48%, rgba(23,44,36,.25) 49%, transparent 51%); background-size: 70px 60px, 110px 95px; }
 .studio-preview-shade { position: absolute; z-index: 4; left: 0; right: 0; pointer-events: none; }
 .studio-preview-shade-top { top: 0; height: 32%; background: linear-gradient(rgba(23,44,36,.82), transparent); }
 .studio-preview-shade-bottom { bottom: 0; height: 43%; background: linear-gradient(transparent, rgba(23,44,36,.92)); }
@@ -110,6 +109,7 @@
 .studio-choice-grid button { min-height: 38px; border: 1px solid var(--line); background: transparent; font-size: 10px; font-weight: 780; cursor: pointer; }
 .studio-choice-grid button.active { border-color: var(--ink); background: var(--ink); color: var(--lime); }
 .studio-choice-grid button:disabled { opacity: .38; cursor: not-allowed; }
+.studio-details-toggle { margin-top: 14px; }
 .soundtrack-list { display: grid; gap: 6px; }
 .soundtrack-list button { min-height: 49px; display: flex; gap: 11px; align-items: center; border: 1px solid var(--line); background: transparent; padding: 8px; text-align: left; cursor: pointer; }
 .soundtrack-list button.active { border-color: var(--orange); box-shadow: inset 3px 0 var(--orange); background: #faf4e9; }
