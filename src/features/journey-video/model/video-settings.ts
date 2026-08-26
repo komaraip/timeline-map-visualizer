@@ -1,7 +1,6 @@
 export type VideoAspectRatio = "portrait" | "square" | "landscape";
 export type VideoResolution = "standard" | "hd" | "ultra";
 export type VideoFrameRate = 30 | 60;
-export type VideoMapMode = "basemap" | "minimal";
 export type SoundtrackId = "ambient-drift" | "bright-miles" | "cinematic-rise" | "none" | "upload";
 export type ExportStatus = "idle" | "preparing" | "recording" | "finalizing" | "complete" | "cancelled" | "error";
 export type JourneyCameraPhase = "idle" | "intro" | "follow" | "overview";
@@ -71,7 +70,6 @@ export interface JourneyVideoSettings {
   soundtrackId: SoundtrackId;
   volume: number;
   fps: VideoFrameRate;
-  mapMode: VideoMapMode;
 }
 
 export const DEFAULT_VIDEO_SETTINGS: JourneyVideoSettings = {
@@ -84,7 +82,6 @@ export const DEFAULT_VIDEO_SETTINGS: JourneyVideoSettings = {
   soundtrackId: "ambient-drift",
   volume: 0.7,
   fps: 30,
-  mapMode: "basemap",
 };
 
 export const videoDimensions = (aspectRatio: VideoAspectRatio, resolution: VideoResolution) => {

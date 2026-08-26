@@ -91,7 +91,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
   });
 
   useEffect(() => {
-    if (!mapFallback && settings.mapMode !== "minimal") return;
+    if (!mapFallback) return;
     const canvas = minimalPreviewCanvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
@@ -118,7 +118,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
         canvas.width,
       );
     }
-  }, [camera, cameraTuning.minimalScale, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
+  }, [camera, cameraTuning.minimalScale, frame, mapFallback, projectMinimal, settings.aspectRatio, track]);
 
   const renderFrame = useCallback((
     canvas: HTMLCanvasElement,
@@ -159,7 +159,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     audioSource: source,
     hasJourney: track.steps.length > 0,
     stopPlayback,
-    basemapIsRecordable: () => basemapIsRecordable(settings.mapMode),
+    basemapIsRecordable,
     prepareBasemapCapture,
     restoreBasemapCapture,
     onFallback: () => setMapFallback(true),
@@ -230,7 +230,6 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
             onVolume={(volume) => setSettings((current) => ({ ...current, volume }))}
           />
           <VideoExportPanel
-            mapMode={settings.mapMode}
             formatLabel={formatLabel}
             qualityLabel={qualityLabel}
             status={exportStatus}
@@ -239,7 +238,6 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
             outputUrl={outputUrl}
             outputExtension={outputExtension}
             hasJourney={track.steps.length > 0}
-            onMapMode={(mapMode) => setSettings((current) => ({ ...current, mapMode }))}
             onCreate={() => void createVideo()}
             onCancel={cancelExport}
             onDownload={downloadVideo}

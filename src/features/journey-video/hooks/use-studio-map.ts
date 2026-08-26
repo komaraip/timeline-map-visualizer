@@ -3,7 +3,7 @@ import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from
 import type { Position } from "@/core/timeline";
 import { MAP_STYLE_URL } from "@/shared/config/map";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";
-import type { JourneyCameraPhase, JourneyCameraState, JourneyCameraTuning, VideoMapMode } from "../model/video-settings";
+import type { JourneyCameraPhase, JourneyCameraState, JourneyCameraTuning } from "../model/video-settings";
 
 const LINE_FRAME_INTERVAL_MS = 1000 / 30;
 
@@ -201,8 +201,8 @@ export function useStudioMap(track: JourneyTrack, cameraTuning: JourneyCameraTun
     };
   }, [track, updateMapFrame]);
 
-  const basemapIsRecordable = useCallback((mapMode: VideoMapMode) => {
-    if (mapMode === "minimal" || mapFallback || !mapRef.current) return false;
+  const basemapIsRecordable = useCallback(() => {
+    if (mapFallback || !mapRef.current) return false;
     try {
       const scratch = document.createElement("canvas");
       scratch.width = 2; scratch.height = 2;

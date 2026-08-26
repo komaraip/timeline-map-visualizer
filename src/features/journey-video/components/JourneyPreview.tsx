@@ -33,16 +33,15 @@ export function JourneyPreview({
   onToggle,
   onSeek,
 }: JourneyPreviewProps) {
-  const privateMap = mapFallback || settings.mapMode === "minimal";
-  const mapStatus = !mapReady && !mapFallback && settings.mapMode !== "minimal"
+  const mapStatus = !mapReady && !mapFallback
     ? "LOADING BASEMAP"
-    : "PRIVATE MAP MODE";
+    : "LOCAL MAP FALLBACK";
 
   return (
     <section className="studio-stage" aria-label="Animated journey preview">
       <div className={`studio-preview studio-${settings.aspectRatio}`}>
         <div ref={mapContainerRef} className="studio-map" />
-        {(!mapReady || privateMap) && (
+        {(!mapReady || mapFallback) && (
           <div className="studio-minimal-preview">
             <canvas ref={minimalCanvasRef} />
             <span>{mapStatus}</span>
