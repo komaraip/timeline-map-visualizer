@@ -105,9 +105,11 @@
 .studio-controls input[type="range"] { width: 100%; margin-top: 10px; accent-color: var(--orange); }
 .studio-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .studio-choice-grid-two { grid-template-columns: repeat(2, 1fr); margin-top: 8px; }
+.studio-choice-grid-three { grid-template-columns: repeat(3, 1fr); margin-top: 8px; }
 .studio-choice-grid-four { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }
 .studio-choice-grid button { min-height: 38px; border: 1px solid var(--line); background: transparent; font-size: 10px; font-weight: 780; cursor: pointer; }
 .studio-choice-grid button.active { border-color: var(--ink); background: var(--ink); color: var(--lime); }
+.studio-choice-grid button:disabled { opacity: .38; cursor: not-allowed; }
 .soundtrack-list { display: grid; gap: 6px; }
 .soundtrack-list button { min-height: 49px; display: flex; gap: 11px; align-items: center; border: 1px solid var(--line); background: transparent; padding: 8px; text-align: left; cursor: pointer; }
 .soundtrack-list button.active { border-color: var(--orange); box-shadow: inset 3px 0 var(--orange); background: #faf4e9; }
@@ -116,6 +118,7 @@
 .soundtrack-list strong { max-width: 255px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 10px; }
 .soundtrack-list small { margin-top: 3px; color: rgba(23,44,36,.56); font-size: 8px; }
 .studio-export-note { margin: 14px 0; color: rgba(23,44,36,.63); font-size: 10px; line-height: 1.55; }
+.studio-quality-note { margin: -6px 0 14px; padding: 9px 10px; background: #e9f0df; color: rgba(23,44,36,.72); font-size: 9px; line-height: 1.5; }
 .studio-create, .studio-cancel, .studio-result button { width: 100%; min-height: 44px; border: 1px solid var(--ink); background: var(--lime); color: var(--ink); font-size: 11px; font-weight: 850; cursor: pointer; }
 .studio-cancel { margin-top: 7px; background: transparent; }
 .studio-export-progress { position: relative; min-height: 28px; margin-top: 11px; background: #e6e1d5; overflow: hidden; }

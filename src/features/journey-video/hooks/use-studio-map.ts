@@ -156,6 +156,7 @@ export function useStudioMap(track: JourneyTrack) {
           preserveDrawingBuffer: true,
         },
         cancelPendingTileRequestsWhileZooming: false,
+        maxCanvasSize: [4096, 4096],
       });
       map.on("load", () => {
         map.addSource("journey-completed", { type: "geojson", data: lineCollection([]) });

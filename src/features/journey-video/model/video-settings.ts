@@ -1,5 +1,6 @@
 export type VideoAspectRatio = "portrait" | "square" | "landscape";
-export type VideoResolution = "standard" | "hd";
+export type VideoResolution = "standard" | "hd" | "ultra";
+export type VideoFrameRate = 30 | 60;
 export type VideoMapMode = "basemap" | "minimal";
 export type SoundtrackId = "ambient-drift" | "bright-miles" | "cinematic-rise" | "none" | "upload";
 export type ExportStatus = "idle" | "preparing" | "recording" | "finalizing" | "complete" | "cancelled" | "error";
@@ -49,13 +50,13 @@ export interface JourneyVideoSettings {
   subtitle: string;
   soundtrackId: SoundtrackId;
   volume: number;
-  fps: 30;
+  fps: VideoFrameRate;
   mapMode: VideoMapMode;
 }
 
 export const DEFAULT_VIDEO_SETTINGS: JourneyVideoSettings = {
   aspectRatio: "portrait",
-  resolution: "standard",
+  resolution: "hd",
   durationSec: 15,
   title: "My journey",
   subtitle: "",
@@ -66,8 +67,30 @@ export const DEFAULT_VIDEO_SETTINGS: JourneyVideoSettings = {
 };
 
 export const videoDimensions = (aspectRatio: VideoAspectRatio, resolution: VideoResolution) => {
-  const hd = resolution === "hd";
-  if (aspectRatio === "portrait") return { width: hd ? 1080 : 720, height: hd ? 1920 : 1280 };
-  if (aspectRatio === "square") return { width: hd ? 1080 : 720, height: hd ? 1080 : 720 };
-  return { width: hd ? 1920 : 1280, height: hd ? 1080 : 720 };
+  const shortEdge = resolution === "ultra" ? 1440 : resolution === "hd" ? 1080 : 720;
+  if (aspectRatio === "portrait") return { width: shortEdge, height: Math.round(shortEdge * 16 / 9) };
+  if (aspectRatio === "square") return { width: shortEdge, height: shortEdge };
+  return { width: Math.round(shortEdge * 16 / 9), height: shortEdge };
+};
+
+export const videoBitrate = (settings: JourneyVideoSettings) => {
+  const dimensions = videoDimensions(settings.aspectRatio, settings.resolution);
+  const qualityFloor = settings.resolution === "ultra"
+    ? 46_000_000
+    : settings.resolution === "hd"
+      ? 26_000_000
+      : 12_000_000;
+  const qualityCeiling = settings.resolution === "ultra"
+    ? 72_000_000
+    : settings.resolution === "hd"
+      ? 54_000_000
+      : 24_000_000;
+  const pixelTarget = dimensions.width * dimensions.height * settings.fps * 0.42;
+  const bounded = Math.min(qualityCeiling, Math.max(qualityFloor, pixelTarget));
+  return Math.round(bounded / 500_000) * 500_000;
+};
+
+export const estimatedVideoSizeMb = (settings: JourneyVideoSettings) => {
+  const totalBitsPerSecond = videoBitrate(settings) + 192_000;
+  return totalBitsPerSecond * journeyVideoSeconds(settings.durationSec) / 8_000_000;
 };

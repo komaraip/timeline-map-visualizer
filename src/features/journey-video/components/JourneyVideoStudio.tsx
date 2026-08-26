@@ -5,9 +5,20 @@ import { useJourneyRecorder } from "../hooks/use-journey-recorder";
 import { useStudioMap } from "../hooks/use-studio-map";
 import { soundtrackSource } from "../media/soundtrack-catalog";
 import { buildJourneyTrack } from "../model/journey-track";
-import { DEFAULT_VIDEO_SETTINGS, videoDimensions, type JourneyCameraState } from "../model/video-settings";
+import {
+  DEFAULT_VIDEO_SETTINGS,
+  estimatedVideoSizeMb,
+  videoBitrate,
+  videoDimensions,
+  type JourneyCameraState,
+} from "../model/video-settings";
 import { drawCompositeFrame } from "../rendering/canvas-renderer";
-import { createCameraProjector, createMinimalProjector, drawJourneyMarker, drawMinimalMap } from "../rendering/minimal-map-renderer";
+import {
+  createCameraProjector,
+  createMinimalProjector,
+  drawJourneyMarker,
+  drawMinimalMap,
+} from "../rendering/minimal-map-renderer";
 import { JourneyControls } from "./JourneyControls";
 import { JourneyPreview } from "./JourneyPreview";
 import { SoundtrackPicker } from "./SoundtrackPicker";
@@ -20,8 +31,13 @@ interface JourneyVideoStudioProps {
 
 const formatPeriod = (startMs: number, endMs: number) => {
   if (!startMs) return "No dated journey";
-  const formatter = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-  return `${formatter.format(startMs)} — ${formatter.format(endMs)}`;
+  const formatter = new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  return `${formatter.format(startMs)} - ${formatter.format(endMs)}`;
 };
 
 export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps) {
@@ -33,7 +49,12 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
   const track = useMemo(() => buildJourneyTrack(events), [events]);
   const period = useMemo(() => formatPeriod(track.startMs, track.endMs), [track.endMs, track.startMs]);
   const projectMinimal = useMemo(() => createMinimalProjector(track.bounds), [track.bounds]);
-  const source = useMemo(() => soundtrackSource(settings.soundtrackId, customAudioUrl), [customAudioUrl, settings.soundtrackId]);
+  const source = useMemo(
+    () => soundtrackSource(settings.soundtrackId, customAudioUrl),
+    [customAudioUrl, settings.soundtrackId],
+  );
+  const outputDimensions = videoDimensions(settings.aspectRatio, settings.resolution);
+  const qualityLabel = `${outputDimensions.width}x${outputDimensions.height} | ${settings.fps} FPS | ${(videoBitrate(settings) / 1_000_000).toFixed(1)} Mbps target | ~${estimatedVideoSizeMb(settings).toFixed(0)} MB`;
   const {
     mapContainerRef,
     mapRef,
@@ -80,14 +101,25 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
       : frame;
     const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera);
     drawMinimalMap(context, canvas.width, canvas.height, previewFrame, cameraProjector);
-    if (previewFrame.position) drawJourneyMarker(context, cameraProjector(previewFrame.position, canvas.width, canvas.height), canvas.width);
+    if (previewFrame.position) {
+      drawJourneyMarker(
+        context,
+        cameraProjector(previewFrame.position, canvas.width, canvas.height),
+        canvas.width,
+      );
+    }
   }, [camera, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
 
-  const renderFrame = useCallback((canvas: HTMLCanvasElement, frame: ReturnType<typeof track.frameAt>, cameraState: JourneyCameraState, useBasemap: boolean) => {
+  const renderFrame = useCallback((
+    canvas: HTMLCanvasElement,
+    journeyFrame: ReturnType<typeof track.frameAt>,
+    cameraState: JourneyCameraState,
+    useBasemap: boolean,
+  ) => {
     if (useBasemap) mapRef.current?.redraw();
     drawCompositeFrame({
       canvas,
-      frame,
+      frame: journeyFrame,
       camera: cameraState,
       useBasemap,
       basemapCanvas: mapRef.current?.getCanvas(),
@@ -141,7 +173,9 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
   }, [cancelExport, onClose, stopPlayback]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeStudio(); };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeStudio();
+    };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeStudio]);
@@ -152,13 +186,53 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
 
   return (
     <div className="studio-overlay" role="dialog" aria-modal="true" aria-labelledby="studio-title">
-      <header className="studio-header"><div><span className="studio-kicker">Journey Video Studio</span><h1 id="studio-title">Create a moving memory.</h1></div><button type="button" className="studio-close" onClick={closeStudio} aria-label="Close video studio">×</button></header>
+      <header className="studio-header">
+        <div>
+          <span className="studio-kicker">Journey Video Studio</span>
+          <h1 id="studio-title">Create a moving memory.</h1>
+        </div>
+        <button type="button" className="studio-close" onClick={closeStudio} aria-label="Close video studio">x</button>
+      </header>
       <div className="studio-body">
-        <JourneyPreview settings={settings} track={track} frame={frame} period={period} progress={progress} playing={playing} mapReady={mapReady} mapFallback={mapFallback} mapContainerRef={mapContainerRef} minimalCanvasRef={minimalPreviewCanvasRef} onRestart={restart} onToggle={togglePlayback} onSeek={seek} />
+        <JourneyPreview
+          settings={settings}
+          track={track}
+          frame={frame}
+          period={period}
+          progress={progress}
+          playing={playing}
+          mapReady={mapReady}
+          mapFallback={mapFallback}
+          mapContainerRef={mapContainerRef}
+          minimalCanvasRef={minimalPreviewCanvasRef}
+          onRestart={restart}
+          onToggle={togglePlayback}
+          onSeek={seek}
+        />
         <aside className="studio-controls">
           <JourneyControls settings={settings} setSettings={setSettings} period={period} />
-          <SoundtrackPicker settings={settings} customAudioName={customAudioName} onSoundtrack={(soundtrackId) => setSettings((current) => ({ ...current, soundtrackId }))} onUpload={chooseCustomAudio} onVolume={(volume) => setSettings((current) => ({ ...current, volume }))} />
-          <VideoExportPanel mapMode={settings.mapMode} formatLabel={formatLabel} status={exportStatus} progress={exportProgress} message={exportMessage} outputUrl={outputUrl} outputExtension={outputExtension} hasJourney={track.steps.length > 0} onMapMode={(mapMode) => setSettings((current) => ({ ...current, mapMode }))} onCreate={() => void createVideo()} onCancel={cancelExport} onDownload={downloadVideo} />
+          <SoundtrackPicker
+            settings={settings}
+            customAudioName={customAudioName}
+            onSoundtrack={(soundtrackId) => setSettings((current) => ({ ...current, soundtrackId }))}
+            onUpload={chooseCustomAudio}
+            onVolume={(volume) => setSettings((current) => ({ ...current, volume }))}
+          />
+          <VideoExportPanel
+            mapMode={settings.mapMode}
+            formatLabel={formatLabel}
+            qualityLabel={qualityLabel}
+            status={exportStatus}
+            progress={exportProgress}
+            message={exportMessage}
+            outputUrl={outputUrl}
+            outputExtension={outputExtension}
+            hasJourney={track.steps.length > 0}
+            onMapMode={(mapMode) => setSettings((current) => ({ ...current, mapMode }))}
+            onCreate={() => void createVideo()}
+            onCancel={cancelExport}
+            onDownload={downloadVideo}
+          />
         </aside>
       </div>
       <canvas ref={exportCanvasRef} className="studio-export-canvas" aria-hidden="true" />

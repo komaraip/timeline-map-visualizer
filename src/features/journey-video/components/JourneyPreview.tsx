@@ -30,7 +30,6 @@ export function JourneyPreview({ settings, track, frame, period, progress, playi
         <div className="studio-title-card"><strong>{settings.title || "My journey"}</strong><span>{settings.subtitle || period}</span></div>
         <div className="studio-now"><strong>{progress >= 1 ? "Journey complete" : frame.currentLabel}</strong><span>{track.totalDistanceKm.toFixed(track.totalDistanceKm < 100 ? 1 : 0)} km mapped · {track.visits.length} visits</span></div>
         <div className="studio-progress-visual"><i style={{ width: `${progress * 100}%` }} /></div>
-        <div className="studio-watermark">TIMELINE MAP VISUALIZER · CREATED LOCALLY</div>
       </div>
       <div className="studio-transport">
         <button type="button" onClick={onRestart} aria-label="Restart preview">↺</button>

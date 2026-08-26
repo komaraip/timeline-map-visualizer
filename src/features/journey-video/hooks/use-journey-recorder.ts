@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chooseRecordingMimeType } from "../media/mime-types";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";
-import { journeyPresentationAt, journeyVideoSeconds, videoDimensions, type ExportStatus, type JourneyCameraState, type JourneyVideoSettings } from "../model/video-settings";
+import { journeyPresentationAt, journeyVideoSeconds, videoBitrate, videoDimensions, type ExportStatus, type JourneyCameraState, type JourneyVideoSettings } from "../model/video-settings";
 
 interface JourneyRecorderOptions {
   track: JourneyTrack;
@@ -16,6 +16,8 @@ interface JourneyRecorderOptions {
   onFrame: (frame: JourneyFrame, camera: JourneyCameraState) => void;
   drawFrame: (canvas: HTMLCanvasElement, frame: JourneyFrame, camera: JourneyCameraState, useBasemap: boolean) => void;
 }
+
+const BASEMAP_SUPERSAMPLE = 1.25;
 
 export function useJourneyRecorder(options: JourneyRecorderOptions) {
   const {
@@ -82,8 +84,11 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     canvas.width = dimensions.width; canvas.height = dimensions.height;
     const useBasemap = basemapIsRecordable();
     if (useBasemap) {
-      setMessage("Preparing the basemap at full video resolutionâ€¦");
-      prepareBasemapCapture(dimensions.width, dimensions.height);
+      setMessage("Preparing the basemap at full video resolution...");
+      prepareBasemapCapture(
+        Math.round(dimensions.width * BASEMAP_SUPERSAMPLE),
+        Math.round(dimensions.height * BASEMAP_SUPERSAMPLE),
+      );
     } else {
       onFallback();
       setMessage("Using the private minimal map because basemap recording is unavailable.");
@@ -115,7 +120,7 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     try {
       recorder = new MediaRecorder(captureStream, {
         ...(format.mimeType ? { mimeType: format.mimeType } : {}),
-        videoBitsPerSecond: settings.resolution === "hd" ? 24_000_000 : 12_000_000,
+        videoBitsPerSecond: videoBitrate(settings),
         audioBitsPerSecond: 192_000,
       });
     } catch {
@@ -137,18 +142,28 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     recorder.start(1000);
     setStatus("recording"); setMessage(`Recording ${format.extension.toUpperCase()} locally…`);
     const totalSeconds = journeyVideoSeconds(settings.durationSec);
+    const initialPresentation = journeyPresentationAt(0, settings.durationSec);
+    const initialFrame = track.frameAt(initialPresentation.routeProgress);
+    onFrame(initialFrame, initialPresentation.camera);
+    drawFrame(canvas, initialFrame, initialPresentation.camera, useBasemap);
     const recordingStarted = performance.now();
+    const frameIntervalMs = 1000 / settings.fps;
+    let nextFrameAt = recordingStarted + frameIntervalMs;
     let lastUiUpdate = 0;
     const render = (timestamp: number) => {
       if (recorder.state !== "recording") return;
       const elapsed = (timestamp - recordingStarted) / 1000;
       const boundedElapsed = Math.min(totalSeconds, elapsed);
-      const presentation = journeyPresentationAt(boundedElapsed, settings.durationSec);
-      const frame = track.frameAt(presentation.routeProgress);
-      onFrame(frame, presentation.camera);
+      const shouldRender = timestamp + 1 >= nextFrameAt || boundedElapsed >= totalSeconds;
+      if (shouldRender) {
+        while (nextFrameAt <= timestamp + 1) nextFrameAt += frameIntervalMs;
+        const presentation = journeyPresentationAt(boundedElapsed, settings.durationSec);
+        const frame = track.frameAt(presentation.routeProgress);
+        onFrame(frame, presentation.camera);
+        drawFrame(canvas, frame, presentation.camera, useBasemap);
+      }
       const fade = Math.min(1, boundedElapsed / 0.6, Math.max(0, (totalSeconds - boundedElapsed) / 0.7));
       if (gainNode) gainNode.gain.value = settings.volume * fade;
-      drawFrame(canvas, frame, presentation.camera, useBasemap);
       if (timestamp - lastUiUpdate >= 100 || boundedElapsed >= totalSeconds) {
         lastUiUpdate = timestamp;
         setProgress(Math.min(1, boundedElapsed / totalSeconds));

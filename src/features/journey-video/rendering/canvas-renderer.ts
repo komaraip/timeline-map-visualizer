@@ -66,5 +66,5 @@ export const drawCompositeFrame = (options: CompositeFrameOptions) => {
   context.fillStyle = "rgba(243,240,231,.28)"; context.fillRect(margin, height - margin * 0.72, width - margin * 2, Math.max(5, height * 0.004));
   context.fillStyle = "#d8ff5f"; context.fillRect(margin, height - margin * 0.72, (width - margin * 2) * frame.progress, Math.max(5, height * 0.004));
   context.font = `700 ${Math.round(width * 0.014)}px Arial, sans-serif`; context.fillStyle = "rgba(243,240,231,.7)";
-  context.fillText("TIMELINE MAP VISUALIZER  ·  CREATED LOCALLY", margin, height - margin * 0.28);
+  context.fillText("TIMELINE MAP VISUALIZER", margin, height - margin * 0.28);
 };

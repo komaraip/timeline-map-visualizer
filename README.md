@@ -91,7 +91,7 @@ After importing data, select **Create short** to open the full-screen video stud
 
 - Aspect ratios: portrait `9:16`, square `1:1`, and landscape `16:9`.
 - Journey durations: 10, 15, 30, or 60 seconds, plus the ending overview.
-- Resolutions: 720p standard and 1080p HD at 30 FPS.
+- Resolutions: 720p, 1080p HD, and 1440p with adaptive high-bitrate recording; 30 FPS and 60 FPS are available (1440p is limited to 30 FPS for browser stability).
 - Soundtracks: three bundled CC0 instrumental loops, no music, or a local audio file selected by the user.
 - Output: MP4 when the browser exposes a compatible H.264/AAC recorder, otherwise WebM VP9/Opus or VP8/Opus.
 
