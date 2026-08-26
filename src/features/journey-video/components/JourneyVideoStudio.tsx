@@ -8,6 +8,7 @@ import { buildJourneyTrack } from "../model/journey-track";
 import {
   DEFAULT_VIDEO_SETTINGS,
   estimatedVideoSizeMb,
+  recommendedJourneyCamera,
   videoBitrate,
   videoDimensions,
   type JourneyCameraState,
@@ -55,6 +56,10 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
   );
   const outputDimensions = videoDimensions(settings.aspectRatio, settings.resolution);
   const qualityLabel = `${outputDimensions.width}x${outputDimensions.height} | ${settings.fps} FPS | ${(videoBitrate(settings) / 1_000_000).toFixed(1)} Mbps target | ~${estimatedVideoSizeMb(settings).toFixed(0)} MB`;
+  const cameraTuning = useMemo(
+    () => recommendedJourneyCamera(track.totalDistanceKm, settings.durationSec),
+    [settings.durationSec, track.totalDistanceKm],
+  );
   const {
     mapContainerRef,
     mapRef,
@@ -66,7 +71,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     projectBasemap,
     prepareBasemapCapture,
     restoreBasemapCapture,
-  } = useStudioMap(track);
+  } = useStudioMap(track, cameraTuning);
 
   const {
     frame,
@@ -99,7 +104,12 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     const previewFrame = camera.phase === "overview"
       ? { ...track.frameAt(1), completedPaths: track.movements.map((step) => step.path), activePath: [] }
       : frame;
-    const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera);
+    const cameraProjector = createCameraProjector(
+      projectMinimal,
+      frame.position,
+      camera,
+      cameraTuning.minimalScale,
+    );
     drawMinimalMap(context, canvas.width, canvas.height, previewFrame, cameraProjector);
     if (previewFrame.position) {
       drawJourneyMarker(
@@ -108,7 +118,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
         canvas.width,
       );
     }
-  }, [camera, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
+  }, [camera, cameraTuning.minimalScale, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
 
   const renderFrame = useCallback((
     canvas: HTMLCanvasElement,
@@ -121,6 +131,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
       canvas,
       frame: journeyFrame,
       camera: cameraState,
+      cameraFollowScale: cameraTuning.minimalScale,
       useBasemap,
       basemapCanvas: mapRef.current?.getCanvas(),
       projectBasemap,
@@ -129,7 +140,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
       period,
       track,
     });
-  }, [mapRef, period, projectBasemap, projectMinimal, settings, track]);
+  }, [cameraTuning.minimalScale, mapRef, period, projectBasemap, projectMinimal, settings, track]);
 
   const {
     exportCanvasRef,

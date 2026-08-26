@@ -3,10 +3,8 @@ import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from
 import type { Position } from "@/core/timeline";
 import { MAP_STYLE_URL } from "@/shared/config/map";
 import type { JourneyFrame, JourneyTrack } from "../model/journey-track";
-import type { JourneyCameraPhase, JourneyCameraState, VideoMapMode } from "../model/video-settings";
+import type { JourneyCameraPhase, JourneyCameraState, JourneyCameraTuning, VideoMapMode } from "../model/video-settings";
 
-const FOLLOW_ZOOM = 14.25;
-const CAMERA_RESPONSE_SECONDS = 0.16;
 const LINE_FRAME_INTERVAL_MS = 1000 / 30;
 
 interface CameraSnapshot {
@@ -50,7 +48,7 @@ const mapSnapshot = (map: MapLibreMap): CameraSnapshot => {
   return { center: [center.lng, center.lat], zoom: map.getZoom() };
 };
 
-export function useStudioMap(track: JourneyTrack) {
+export function useStudioMap(track: JourneyTrack, cameraTuning: JourneyCameraTuning) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<MapLibreMarker | null>(null);
@@ -63,8 +61,13 @@ export function useStudioMap(track: JourneyTrack) {
   const lastLineFrameRef = useRef(0);
   const completedSignatureRef = useRef("");
   const previewPixelRatioRef = useRef<number | null>(null);
+  const cameraTuningRef = useRef(cameraTuning);
   const [mapReady, setMapReady] = useState(false);
   const [mapFallback, setMapFallback] = useState(false);
+
+  useEffect(() => {
+    cameraTuningRef.current = cameraTuning;
+  }, [cameraTuning]);
 
   const updateMapFrame = useCallback((frame: JourneyFrame, camera: JourneyCameraState) => {
     const map = mapRef.current;
@@ -91,7 +94,7 @@ export function useStudioMap(track: JourneyTrack) {
 
     const overviewCamera = overviewCameraRef.current;
     const targetPosition = frame.position;
-    const followZoom = Math.min(FOLLOW_ZOOM, map.getMaxZoom() - 0.25);
+    const followZoom = Math.min(cameraTuningRef.current.followZoom, map.getMaxZoom() - 0.25);
 
     if (camera.phase === "idle" && overviewCamera) {
       map.jumpTo({ center: overviewCamera.center, zoom: overviewCamera.zoom });
@@ -111,7 +114,7 @@ export function useStudioMap(track: JourneyTrack) {
       const elapsedSeconds = lastCameraFrameRef.current
         ? Math.min(0.1, (now - lastCameraFrameRef.current) / 1000)
         : 1 / 60;
-      const response = 1 - Math.exp(-elapsedSeconds / CAMERA_RESPONSE_SECONDS);
+      const response = 1 - Math.exp(-elapsedSeconds / cameraTuningRef.current.responseSeconds);
       const nextCamera = {
         center: interpolatePosition(previous.center, targetPosition, response),
         zoom: previous.zoom + (followZoom - previous.zoom) * Math.min(1, response * 1.35),

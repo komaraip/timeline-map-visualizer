@@ -37,6 +37,7 @@ interface CompositeFrameOptions {
   canvas: HTMLCanvasElement;
   frame: JourneyFrame;
   camera: JourneyCameraState;
+  cameraFollowScale: number;
   useBasemap: boolean;
   basemapCanvas?: HTMLCanvasElement;
   projectBasemap?: (position: Position, width: number, height: number) => CanvasPoint;
@@ -51,6 +52,7 @@ export const drawCompositeFrame = (options: CompositeFrameOptions) => {
     canvas,
     frame,
     camera,
+    cameraFollowScale,
     useBasemap,
     basemapCanvas,
     projectBasemap,
@@ -63,7 +65,7 @@ export const drawCompositeFrame = (options: CompositeFrameOptions) => {
   if (!context) return;
   const { width, height } = canvas;
   const overview = camera.phase === "overview";
-  const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera);
+  const cameraProjector = createCameraProjector(projectMinimal, frame.position, camera, cameraFollowScale);
   context.clearRect(0, 0, width, height);
 
   if (useBasemap && basemapCanvas?.width && basemapCanvas.height) {

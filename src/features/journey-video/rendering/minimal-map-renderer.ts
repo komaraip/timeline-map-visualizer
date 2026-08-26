@@ -5,7 +5,6 @@ import type { JourneyCameraState } from "../model/video-settings";
 export type CanvasPoint = { x: number; y: number };
 export type MinimalProjector = (position: Position, width: number, height: number) => CanvasPoint;
 
-const FOLLOW_SCALE = 2.65;
 const easeInOutCubic = (progress: number) => progress < 0.5
   ? 4 * progress * progress * progress
   : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -28,6 +27,7 @@ export const createCameraProjector = (
   project: MinimalProjector,
   focus: Position | undefined,
   camera: JourneyCameraState,
+  followScale = 2,
 ): MinimalProjector => (position, width, height) => {
   const point = project(position, width, height);
   if (!focus || camera.phase === "idle") return point;
@@ -38,10 +38,10 @@ export const createCameraProjector = (
       ? 1 - eased
       : 1;
   const scale = camera.phase === "intro"
-    ? 1 + (FOLLOW_SCALE - 1) * eased
+    ? 1 + (followScale - 1) * eased
     : camera.phase === "overview"
-      ? FOLLOW_SCALE + (1 - FOLLOW_SCALE) * eased
-      : FOLLOW_SCALE;
+      ? followScale + (1 - followScale) * eased
+      : followScale;
   const focusPoint = project(focus, width, height);
   const cameraX = width / 2 + (focusPoint.x - width / 2) * focusAmount;
   const cameraY = height / 2 + (focusPoint.y - height / 2) * focusAmount;

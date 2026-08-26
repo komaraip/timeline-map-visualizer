@@ -11,6 +11,12 @@ export interface JourneyCameraState {
   progress: number;
 }
 
+export interface JourneyCameraTuning {
+  followZoom: number;
+  minimalScale: number;
+  responseSeconds: number;
+}
+
 export const INTRO_SECONDS = 1.4;
 export const ENDING_SECONDS = 1.5;
 export const IDLE_CAMERA: JourneyCameraState = { phase: "idle", progress: 0 };
@@ -18,6 +24,19 @@ export const IDLE_CAMERA: JourneyCameraState = { phase: "idle", progress: 0 };
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
 export const journeyVideoSeconds = (durationSec: number) => INTRO_SECONDS + durationSec + ENDING_SECONDS;
+
+export const recommendedJourneyCamera = (
+  totalDistanceKm: number,
+  durationSec: number,
+): JourneyCameraTuning => {
+  const compressedSpeed = Math.max(0, totalDistanceKm) / Math.max(1, durationSec);
+  const intensity = clamp(Math.log2(1 + compressedSpeed) / 5);
+  return {
+    followZoom: 13 - intensity * 2.25,
+    minimalScale: 2 - intensity * 0.65,
+    responseSeconds: 0.22 + intensity * 0.16,
+  };
+};
 
 export const journeyPresentationAt = (elapsedSeconds: number, durationSec: number) => {
   if (elapsedSeconds < INTRO_SECONDS) {
