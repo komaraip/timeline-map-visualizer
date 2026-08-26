@@ -62,6 +62,7 @@ export function useStudioMap(track: JourneyTrack) {
   const lastCameraFrameRef = useRef(0);
   const lastLineFrameRef = useRef(0);
   const completedSignatureRef = useRef("");
+  const previewPixelRatioRef = useRef<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapFallback, setMapFallback] = useState(false);
 
@@ -149,7 +150,12 @@ export function useStudioMap(track: JourneyTrack) {
         center: initialPosition ?? [0, 18],
         zoom: initialPosition ? 9 : 2,
         attributionControl: {},
-        canvasContextAttributes: { preserveDrawingBuffer: true },
+        canvasContextAttributes: {
+          antialias: true,
+          powerPreference: "high-performance",
+          preserveDrawingBuffer: true,
+        },
+        cancelPendingTileRequestsWhileZooming: false,
       });
       map.on("load", () => {
         map.addSource("journey-completed", { type: "geojson", data: lineCollection([]) });
@@ -213,5 +219,40 @@ export function useStudioMap(track: JourneyTrack) {
     return { x: projected.x / container.clientWidth * width, y: projected.y / container.clientHeight * height };
   }, []);
 
-  return { mapContainerRef, mapRef, mapReady, mapFallback, setMapFallback, updateMapFrame, basemapIsRecordable, projectBasemap };
+  const prepareBasemapCapture = useCallback((width: number, height: number) => {
+    const map = mapRef.current;
+    const container = mapContainerRef.current;
+    if (!map || !container || !container.clientWidth || !container.clientHeight) return;
+    if (previewPixelRatioRef.current === null) previewPixelRatioRef.current = map.getPixelRatio();
+    const capturePixelRatio = Math.max(
+      width / container.clientWidth,
+      height / container.clientHeight,
+    );
+    map.setPixelRatio(capturePixelRatio);
+    map.resize();
+    map.redraw();
+  }, []);
+
+  const restoreBasemapCapture = useCallback(() => {
+    const map = mapRef.current;
+    const previewPixelRatio = previewPixelRatioRef.current;
+    if (!map || previewPixelRatio === null) return;
+    previewPixelRatioRef.current = null;
+    map.setPixelRatio(previewPixelRatio);
+    map.resize();
+    map.redraw();
+  }, []);
+
+  return {
+    mapContainerRef,
+    mapRef,
+    mapReady,
+    mapFallback,
+    setMapFallback,
+    updateMapFrame,
+    basemapIsRecordable,
+    projectBasemap,
+    prepareBasemapCapture,
+    restoreBasemapCapture,
+  };
 }

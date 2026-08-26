@@ -4,6 +4,8 @@ import type { JourneyCameraState, JourneyVideoSettings } from "../model/video-se
 import { createCameraProjector, drawJourneyMarker, drawMinimalMap, type CanvasPoint, type MinimalProjector } from "./minimal-map-renderer";
 
 const drawCover = (context: CanvasRenderingContext2D, source: HTMLCanvasElement, width: number, height: number) => {
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   const scale = Math.max(width / source.width, height / source.height);
   const sourceWidth = width / scale;
   const sourceHeight = height / scale;

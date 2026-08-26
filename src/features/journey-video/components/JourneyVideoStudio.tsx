@@ -43,6 +43,8 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     updateMapFrame,
     basemapIsRecordable,
     projectBasemap,
+    prepareBasemapCapture,
+    restoreBasemapCapture,
   } = useStudioMap(track);
 
   const {
@@ -68,8 +70,11 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
     const dimensions = videoDimensions(settings.aspectRatio, "standard");
-    canvas.width = Math.round(dimensions.width / 2);
-    canvas.height = Math.round(dimensions.height / 2);
+    const pixelRatio = Math.min(2.5, window.devicePixelRatio || 1);
+    const width = Math.round((canvas.clientWidth || dimensions.width / 2) * pixelRatio);
+    const height = Math.round((canvas.clientHeight || dimensions.height / 2) * pixelRatio);
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
     const previewFrame = camera.phase === "overview"
       ? { ...track.frameAt(1), completedPaths: track.movements.map((step) => step.path), activePath: [] }
       : frame;
@@ -79,6 +84,7 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
   }, [camera, frame, mapFallback, projectMinimal, settings.aspectRatio, settings.mapMode, track]);
 
   const renderFrame = useCallback((canvas: HTMLCanvasElement, frame: ReturnType<typeof track.frameAt>, cameraState: JourneyCameraState, useBasemap: boolean) => {
+    if (useBasemap) mapRef.current?.redraw();
     drawCompositeFrame({
       canvas,
       frame,
@@ -111,6 +117,8 @@ export function JourneyVideoStudio({ events, onClose }: JourneyVideoStudioProps)
     hasJourney: track.steps.length > 0,
     stopPlayback,
     basemapIsRecordable: () => basemapIsRecordable(settings.mapMode),
+    prepareBasemapCapture,
+    restoreBasemapCapture,
     onFallback: () => setMapFallback(true),
     onFrame: updateMapFrame,
     drawFrame: renderFrame,

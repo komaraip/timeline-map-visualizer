@@ -10,13 +10,27 @@ interface JourneyRecorderOptions {
   hasJourney: boolean;
   stopPlayback: () => void;
   basemapIsRecordable: () => boolean;
+  prepareBasemapCapture: (width: number, height: number) => void;
+  restoreBasemapCapture: () => void;
   onFallback: () => void;
   onFrame: (frame: JourneyFrame, camera: JourneyCameraState) => void;
   drawFrame: (canvas: HTMLCanvasElement, frame: JourneyFrame, camera: JourneyCameraState, useBasemap: boolean) => void;
 }
 
 export function useJourneyRecorder(options: JourneyRecorderOptions) {
-  const { track, settings, audioSource, hasJourney, stopPlayback, basemapIsRecordable, onFallback, onFrame, drawFrame } = options;
+  const {
+    track,
+    settings,
+    audioSource,
+    hasJourney,
+    stopPlayback,
+    basemapIsRecordable,
+    prepareBasemapCapture,
+    restoreBasemapCapture,
+    onFallback,
+    onFrame,
+    drawFrame,
+  } = options;
   const exportCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const recorderRef = useRef<MediaRecorder | undefined>(undefined);
@@ -41,7 +55,8 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     recordingContextRef.current = undefined;
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     animationRef.current = undefined;
-  }, []);
+    restoreBasemapCapture();
+  }, [restoreBasemapCapture]);
 
   const cancel = useCallback(() => {
     cancelledRef.current = true;
@@ -66,7 +81,13 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     const dimensions = videoDimensions(settings.aspectRatio, settings.resolution);
     canvas.width = dimensions.width; canvas.height = dimensions.height;
     const useBasemap = basemapIsRecordable();
-    if (!useBasemap) { onFallback(); setMessage("Using the private minimal map because basemap recording is unavailable."); }
+    if (useBasemap) {
+      setMessage("Preparing the basemap at full video resolutionâ€¦");
+      prepareBasemapCapture(dimensions.width, dimensions.height);
+    } else {
+      onFallback();
+      setMessage("Using the private minimal map because basemap recording is unavailable.");
+    }
     const captureStream = canvas.captureStream(settings.fps);
     recordingStreamRef.current = captureStream;
     let gainNode: GainNode | undefined;
@@ -94,8 +115,8 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
     try {
       recorder = new MediaRecorder(captureStream, {
         ...(format.mimeType ? { mimeType: format.mimeType } : {}),
-        videoBitsPerSecond: settings.resolution === "hd" ? 8_000_000 : 4_000_000,
-        audioBitsPerSecond: 160_000,
+        videoBitsPerSecond: settings.resolution === "hd" ? 24_000_000 : 12_000_000,
+        audioBitsPerSecond: 192_000,
       });
     } catch {
       releaseResources(); setStatus("error"); setMessage("This browser could not start its local video encoder."); return;
@@ -137,7 +158,7 @@ export function useJourneyRecorder(options: JourneyRecorderOptions) {
       animationRef.current = requestAnimationFrame(render);
     };
     animationRef.current = requestAnimationFrame(render);
-  }, [audioSource, basemapIsRecordable, drawFrame, hasJourney, onFallback, onFrame, releaseResources, settings, status, stopPlayback, track]);
+  }, [audioSource, basemapIsRecordable, drawFrame, hasJourney, onFallback, onFrame, prepareBasemapCapture, releaseResources, settings, status, stopPlayback, track]);
 
   const download = useCallback(() => {
     if (!outputUrl) return;
